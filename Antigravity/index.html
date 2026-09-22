@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Urban Shadows 3D | Class Presentation Engine Showcase</title>
+  <meta name="description"
+    content="Urban Shadows - An original 3D open-world game engine showcase featuring procedural city rendering, vehicle physics, traffic AI, and interactive controls.">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Local Three.js Engine with CDN Fallback -->
+  <script src="lib/three.min.js"></script>
+  <script>
+    if (typeof THREE === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
+    }
+  </script>
+</head>
+
+<body>
+
+  <!-- Top Glassmorphism Navigation Bar -->
+  <header class="top-navbar">
+    <div class="nav-brand">
+      <div class="brand-logo">US</div>
+      <div class="brand-text">
+        <span class="brand-title">URBAN SHADOWS</span>
+        <span class="brand-tag">3D ENGINE SHOWCASE v2.5</span>
+      </div>
+    </div>
+
+    <!-- Center Engine Performance Stats Pill -->
+    <div class="nav-stats">
+      <div class="stat-pill"><span class="pulse-dot"></span> <span id="fps-counter">120 FPS</span></div>
+      <div class="stat-pill">THREE.JS WebGL 2.0</div>
+      <div class="stat-pill">PHYSICS & TRAFFIC AI</div>
+    </div>
+
+    <!-- Right Quick Controls Toolbar -->
+    <div class="nav-actions">
+      <button id="btn-nav-lighting" class="nav-btn" title="Toggle Sky Lighting">🌙 <span id="lighting-label">NIGHT
+          NEON</span></button>
+      <button id="btn-nav-teleport" class="nav-btn" title="Teleport to Car">🚗 TELEPORT TO CAR</button>
+      <button id="btn-nav-specs" class="nav-btn highlight" title="Technical Specs Overlay">📊 TECH SPECS [H]</button>
+      <button id="btn-nav-fullscreen" class="nav-btn" title="Fullscreen Mode">🖥️ FULLSCREEN</button>
+    </div>
+  </header>
+
+  <!-- Game Canvas -->
+  <div id="game-container">
+    <canvas id="three-canvas"></canvas>
+  </div>
+
+  <!-- HUD Overlay -->
+  <div id="hud-overlay">
+    <!-- Top Left: District Status -->
+    <div class="hud-top-left">
+      <div class="wanted-container" id="wanted-container">
+        <span class="wanted-label">DISTRICT STATUS</span>
+        <div class="stars-row" id="wanted-stars">
+          <span class="star active">★</span>
+          <span class="star active">★</span>
+          <span class="star active">★</span>
+          <span class="star">★</span>
+          <span class="star">★</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Right: Health, Stamina, Cash -->
+    <div class="hud-top-right">
+      <div class="stat-card money-card">
+        <span class="stat-icon">💵</span>
+        <span id="cash-val">$2,500</span>
+      </div>
+      <div class="bar-group">
+        <div class="bar-label">HEALTH</div>
+        <div class="bar-track">
+          <div class="bar-fill health-fill" id="health-bar" style="width: 100%;"></div>
+        </div>
+      </div>
+      <div class="bar-group">
+        <div class="bar-label">STAMINA</div>
+        <div class="bar-track">
+          <div class="bar-fill stamina-fill" id="stamina-bar" style="width: 100%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- In-Game Floating Quick Toolbar (Bottom Center) -->
+    <div class="hud-floating-bar">
+      <button id="bar-btn-car" class="bar-btn">🚗 Teleport Near Car</button>
+      <button id="bar-btn-light" class="bar-btn">☀️ Lighting Preset</button>
+      <button id="bar-btn-specs" class="bar-btn">📊 Specs Grid (H)</button>
+      <button id="bar-btn-reset" class="bar-btn">🔄 Reset Pos</button>
+    </div>
+
+    <!-- Bottom Left: Minimap Frame & Speedometer -->
+    <div class="hud-bottom-left">
+      <div class="minimap-frame">
+        <canvas id="minimap-canvas" width="160" height="160"></canvas>
+        <div class="minimap-player-dot" id="minimap-dot"></div>
+        <div class="minimap-border"></div>
+        <div class="minimap-label">DISTRICT 1</div>
+      </div>
+
+      <!-- Vehicle Speedometer HUD -->
+      <div class="speedometer-card" id="speedometer-card" style="display: none;">
+        <div class="speed-val" id="speed-val">0</div>
+        <div class="speed-unit">KM/H</div>
+      </div>
+    </div>
+
+    <!-- Bottom Right: Objective & Interaction Prompt -->
+    <div class="hud-bottom-right">
+      <div class="objective-card">
+        <div class="obj-header">CURRENT DEMO OBJECTIVE</div>
+        <div class="obj-text" id="objective-text">Explore the 3D City or press E near the Sports Car to drive.</div>
+      </div>
+      <div class="interaction-prompt" id="interact-prompt" style="display: none;">
+        <span class="key-badge">E</span> <span id="interact-text">Drive Vehicle</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Start Menu Showcase Modal -->
+  <div id="click-prompt" class="overlay-modal active">
+    <div class="modal-card main-hero-card">
+      <div class="demo-tag">🎓 CLASSROOM PRESENTATION ENGINE SHOWCASE</div>
+      <h1 class="modal-title">URBAN SHADOWS</h1>
+      <p class="modal-subtitle">Original 3D Open-World Engine & Physics Showcase Demo</p>
+
+      <!-- Presentation Modal Navigation Tabs -->
+      <div class="modal-tabs">
+        <button class="tab-btn active" data-tab="tab-overview">Overview</button>
+        <button class="tab-btn" data-tab="tab-controls">Controls Guide</button>
+        <button class="tab-btn" data-tab="tab-architecture">Engine Specs</button>
+      </div>
+
+      <!-- Tab Content 1: Overview -->
+      <div id="tab-overview" class="tab-content active">
+        <div class="overview-box">
+          <p>Welcome to <strong>Urban Shadows 3D</strong> — an interactive 3D WebGL game engine project built for
+            classroom presentation. Experience seamless 360° camera exploration, procedural cityscape architecture,
+            custom vehicle dynamics with neon chassis underglow, dynamic AI traffic, and articulated human movement.</p>
+        </div>
+      </div>
+
+      <!-- Tab Content 2: Controls -->
+      <div id="tab-controls" class="tab-content">
+        <div class="controls-guide">
+          <div class="guide-item"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move / Drive</div>
+          <div class="guide-item"><kbd>Mouse</kbd> 360° Camera Orbit</div>
+          <div class="guide-item"><kbd>Shift</kbd> Sprint</div>
+          <div class="guide-item"><kbd>Space</kbd> Jump / Handbrake</div>
+          <div class="guide-item"><kbd>E</kbd> / <kbd>F</kbd> Enter / Exit Car</div>
+          <div class="guide-item"><kbd>C</kbd> Crouch</div>
+          <div class="guide-item"><kbd>H</kbd> Tech Specs Grid</div>
+          <div class="guide-item"><kbd>Esc</kbd> Pause Menu</div>
+        </div>
+      </div>
+
+      <!-- Tab Content 3: Architecture -->
+      <div id="tab-architecture" class="tab-content">
+        <div class="tech-grid" style="margin-top: 0;">
+          <div class="tech-box">
+            <div class="tech-title">🌆 Procedural World</div>
+            <div class="tech-desc">Skyscrapers, neon billboards, glass facades, and signal lights.</div>
+          </div>
+          <div class="tech-box">
+            <div class="tech-title">🏎️ Vehicle Dynamics</div>
+            <div class="tech-desc">Acceleration curve, suspension, LED lights, cyan neon underglow.</div>
+          </div>
+          <div class="tech-box">
+            <div class="tech-title">🚗 Traffic & NPC AI</div>
+            <div class="tech-desc">Autonomous road navigation & sidewalk walking NPCs.</div>
+          </div>
+          <div class="tech-box">
+            <div class="tech-title">⚡ 120 FPS Performance</div>
+            <div class="tech-desc">Optimized Three.js r128 WebGL rendering pipeline.</div>
+          </div>
+        </div>
+      </div>
+
+      <button id="btn-start" class="btn-action pulse-glow">🚀 LAUNCH 3D CITY DEMO (CLICK / SPACE)</button>
+    </div>
+  </div>
+
+  <!-- Technical Feature Showcase Modal Overlay (Press H) -->
+  <div id="tech-modal" class="overlay-modal" style="display: none;">
+    <div class="modal-card tech-card">
+      <div class="demo-tag">SYSTEM ARCHITECTURE & FEATURES</div>
+      <h2 class="modal-title" style="font-size: 1.8rem;">TECHNICAL SPECIFICATIONS</h2>
+      <p class="modal-subtitle">Full Feature Stack Built into this 3D Engine Showcase</p>
+
+      <div class="tech-grid">
+        <div class="tech-box">
+          <div class="tech-icon">🌆</div>
+          <div class="tech-title">Procedural City Grid</div>
+          <div class="tech-desc">Multi-story glass skyscrapers, roof helipads, procedural wet asphalt texture, traffic
+            light cycles.</div>
+        </div>
+        <div class="tech-box">
+          <div class="tech-icon">🚗</div>
+          <div class="tech-title">Vehicle Engine & Lights</div>
+          <div class="tech-desc">Sports car with alloy wheels, red calipers, spoiler wing, LED spotlights & neon
+            underglow.</div>
+        </div>
+        <div class="tech-box">
+          <div class="tech-icon">🚶</div>
+          <div class="tech-title">Traffic & Pedestrian AI</div>
+          <div class="tech-desc">Civilian AI vehicles (Sedans, SUVs, Coupes) with lane navigation & walking pedestrians.
+          </div>
+        </div>
+        <div class="tech-box">
+          <div class="tech-icon">🎮</div>
+          <div class="tech-title">Humanoid Locomotion</div>
+          <div class="tech-desc">Articulated 1.85m avatar with smooth pose lerping (Idle, Walk, Sprint, Jump, Crouch).
+          </div>
+        </div>
+      </div>
+
+      <button id="btn-close-tech" class="btn-action" style="margin-top: 18px;">CLOSE SPECIFICATIONS (H)</button>
+    </div>
+  </div>
+
+  <!-- Pause Menu -->
+  <div id="pause-modal" class="overlay-modal" style="display: none;">
+    <div class="modal-card">
+      <h2 class="modal-title">GAME PAUSED</h2>
+      <button id="btn-resume" class="btn-action">RESUME DEMO</button>
+      <button id="btn-reset-pos" class="btn-secondary">RESET PLAYER POSITION</button>
+    </div>
+  </div>
+
+  <!-- Game Scripts -->
+  <script src="src/audio.js"></script>
+  <script src="src/ui.js"></script>
+  <script src="src/world.js"></script>
+  <script src="src/character.js"></script>
+  <script src="src/vehicle.js"></script>
+  <script src="src/traffic.js"></script>
+  <script src="src/pedestrians.js"></script>
+  <script src="src/game.js"></script>
+</body>
+
+</html>
